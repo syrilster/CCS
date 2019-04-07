@@ -1,0 +1,86 @@
+apply plugin: 'jacoco'
+
+jacocoTestReport {
+    group = "test reporting"
+    description = "Generate Jacoco coverage reports"
+    additionalSourceDirs = files(sourceSets.main.allJava.srcDirs)
+
+    reports {
+        xml.enabled false
+        csv.enabled false
+        html.destination file("${buildDir}/jacocoHtml")
+    }
+
+    afterEvaluate {
+        classDirectories = files(classDirectories.files.collect {
+            fileTree(dir: it,
+                    exclude: [],
+                    includes: ["com/github/currencyconversionservice/**"])
+        })
+    }
+}
+
+check.dependsOn jacocoTestCoverageVerification
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            element = 'CLASS'
+            includes = ['com.github.currencyconversionservice.*']
+            excludes = []
+            limit {
+                counter = 'INSTRUCTION'
+                value = 'COVEREDRATIO'
+                minimum = 0.0
+                //minimum = 0.9600
+            }
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.0
+            }
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.0
+            }
+            limit {
+                counter = 'COMPLEXITY'
+                value = 'COVEREDRATIO'
+                minimum = 0.0
+            }
+            limit {
+                counter = 'METHOD'
+                value = 'COVEREDRATIO'
+                minimum = 0.0
+            }
+            limit {
+                counter = 'CLASS'
+                value = 'COVEREDRATIO'
+                minimum = 0.0
+            }
+        }
+    }
+}
+
+tasks.withType(Test) {
+    //reports.html.destination = file("${buildDir}/customJacocoReport")
+    reports.html.destination file("${buildDir}/jacocoHtml")
+    testLogging {
+        showStandardStreams = true
+        exceptionFormat = 'full'
+    }
+
+    //print detailed info while running tests
+    beforeTest { descriptor ->
+        logger.lifecycle("Running test: " + descriptor)
+
+    }
+
+    //print coverage
+    jacoco {
+        destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
+        classDumpDir = file("$buildDir/jacoco/classpathdumps")
+    }
+    finalizedBy "jacocoTestReport"
+}

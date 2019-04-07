@@ -1,0 +1,47 @@
+test {
+    systemProperty "spring.profiles.active", "test"
+
+}
+
+apply plugin: 'groovy'
+
+sourceSets {
+    integrationTest {
+        groovy {
+            srcDir 'src/integrationTest/groovy'
+        }
+        resources {
+            srcDir 'src/integrationTest/resources'
+        }
+        compileClasspath += sourceSets.main.runtimeClasspath
+    }
+}
+
+dependencies {
+    testCompile(
+            'junit:junit:4.12',
+            'org.codehaus.groovy:groovy-all:2.4.4',
+            'org.spockframework:spock-core:1.0-groovy-2.4'
+    )
+    testCompile group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: '2.1.2.RELEASE'
+    testCompile group: 'org.springframework.cloud', name: 'spring-cloud-contract-wiremock', version: '2.0.2.RELEASE'
+    testCompile group: 'org.projectlombok', name: 'lombok', version: '1.18.6'
+    integrationTestCompile sourceSets.main.output
+}
+
+configurations {
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRunTime.extendsFrom testRunTime
+}
+// https://docs.gradle.org/5.2.1/userguide/java_testing.html#sec:configuring_java_integration_tests
+task integrationTest(type: Test) {
+    description = 'Runs integration tests.'
+    group = 'verification'
+
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    shouldRunAfter test
+}
+
+check.dependsOn integrationTest
+integrationTest.mustRunAfter test
